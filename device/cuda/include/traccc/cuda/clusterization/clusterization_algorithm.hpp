@@ -35,11 +35,13 @@ class clusterization_algorithm : public device::clusterization_algorithm,
     /// @param str The CUDA stream to perform the operations in
     /// @param config The clustering configuration partition
     /// @param logger The logger instance to use for messaging
+    /// @param await_func The function used to await completion of work
     ///
     clusterization_algorithm(
         const traccc::memory_resource& mr, vecmem::copy& copy,
         cuda::stream& str, const config_type& config,
-        std::unique_ptr<const Logger> logger = getDummyLogger().clone());
+        std::unique_ptr<const Logger> logger = getDummyLogger().clone(),
+        await_function_t await_func = default_await_function);
 
     private:
     /// @name Function(s) inherited from the base class
@@ -68,6 +70,11 @@ class clusterization_algorithm : public device::clusterization_algorithm,
         edm::silicon_cluster_collection::view& cluster_data) const override;
 
     /// @}
+
+    void await() const override;
+
+    private:
+    await_function_t m_await_function;
 
 };  // class clusterization_algorithm
 

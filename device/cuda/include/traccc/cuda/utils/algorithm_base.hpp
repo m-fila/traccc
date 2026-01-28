@@ -41,4 +41,8 @@ class algorithm_base {
 
 };  // class algorithm_base
 
+using await_function_t = void (*)(const cuda::stream&);
+
+void default_await_function(const cuda::stream& stream);
+
 }  // namespace traccc::cuda

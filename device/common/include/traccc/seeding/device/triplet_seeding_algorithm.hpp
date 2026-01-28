@@ -307,6 +307,9 @@ class triplet_seeding_algorithm
 
     /// @}
 
+    /// Possibly suspend execution until all asynchronous operations are done
+    virtual void await() const = 0;
+
     private:
     /// Internal data type
     struct data;

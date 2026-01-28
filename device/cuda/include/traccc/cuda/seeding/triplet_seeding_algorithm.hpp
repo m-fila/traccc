@@ -31,13 +31,15 @@ class triplet_seeding_algorithm : public device::triplet_seeding_algorithm,
     /// @param copy The copy object to use for copying data between device
     ///             and host memory blocks
     /// @param str The CUDA stream to perform the operations in
+    /// @param await_func The function used to await completion of work
     ///
     triplet_seeding_algorithm(
         const seedfinder_config& finder_config,
         const spacepoint_grid_config& grid_config,
         const seedfilter_config& filter_config, const memory_resource& mr,
         vecmem::copy& copy, cuda::stream& str,
-        std::unique_ptr<const Logger> logger = getDummyLogger().clone());
+        std::unique_ptr<const Logger> logger = getDummyLogger().clone(),
+        await_function_t await_func = default_await_function);
 
     private:
     /// @name Function(s) inherited from @c traccc::device::seeding_algorithm
@@ -107,6 +109,11 @@ class triplet_seeding_algorithm : public device::triplet_seeding_algorithm,
         const select_seeds_kernel_payload& payload) const override;
 
     /// @}
+
+    void await() const override;
+
+    private:
+    await_function_t m_await_function;
 
 };  // class triplet_seeding_algorithm
 

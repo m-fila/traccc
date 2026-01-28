@@ -165,11 +165,13 @@ triplet_seeding_algorithm::triplet_seeding_algorithm(
     const seedfinder_config& finder_config,
     const spacepoint_grid_config& grid_config,
     const seedfilter_config& filter_config, const traccc::memory_resource& mr,
-    vecmem::copy& copy, cuda::stream& str, std::unique_ptr<const Logger> logger)
+    vecmem::copy& copy, cuda::stream& str, std::unique_ptr<const Logger> logger,
+    await_function_t await_func)
     : device::triplet_seeding_algorithm(finder_config, grid_config,
                                         filter_config, mr, copy,
                                         std::move(logger)),
-      cuda::algorithm_base{str} {}
+      cuda::algorithm_base{str},
+      m_await_function(await_func) {}
 
 void triplet_seeding_algorithm::count_grid_capacities_kernel(
     const count_grid_capacities_kernel_payload& payload) const {
@@ -292,6 +294,10 @@ void triplet_seeding_algorithm::select_seeds_kernel(
             payload.grid, payload.spM_tc, payload.midBot_tc, payload.triplets,
             payload.seeds);
     TRACCC_CUDA_ERROR_CHECK(cudaGetLastError());
+}
+
+void triplet_seeding_algorithm::await() const {
+    m_await_function(stream());
 }
 
 }  // namespace traccc::cuda

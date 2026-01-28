@@ -32,11 +32,13 @@ class silicon_pixel_spacepoint_formation_algorithm
     ///             and host memory blocks
     /// @param str The CUDA stream to use
     /// @param logger The logger instance to use
+    /// @param await_func The function used to await completion of work
     ///
     silicon_pixel_spacepoint_formation_algorithm(
         const traccc::memory_resource& mr, vecmem::copy& copy,
         cuda::stream& str,
-        std::unique_ptr<const Logger> logger = getDummyLogger().clone());
+        std::unique_ptr<const Logger> logger = getDummyLogger().clone(),
+        await_function_t await_func = default_await_function);
 
     private:
     /// @name Function(s) inherited from
@@ -51,6 +53,11 @@ class silicon_pixel_spacepoint_formation_algorithm
         const form_spacepoints_kernel_payload& payload) const override;
 
     /// @}
+
+    void await() const override;
+
+    private:
+    await_function_t m_await_function;
 
 };  // class silicon_pixel_spacepoint_formation_algorithm
 
