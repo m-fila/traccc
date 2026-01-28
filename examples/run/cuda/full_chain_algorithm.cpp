@@ -8,7 +8,10 @@
 // Local include(s).
 #include "full_chain_algorithm.hpp"
 
+#include "tbb_await.hpp"
+
 // Project include(s).
+#include "traccc/cuda/utils/algorithm_base.hpp"
 #include "traccc/cuda/utils/make_magnetic_field.hpp"
 #include "traccc/seeding/detail/track_params_estimation_config.hpp"
 
@@ -30,6 +33,8 @@
     } while (false)
 
 namespace traccc::cuda {
+
+constexpr auto await_function = tbb_await;
 
 full_chain_algorithm::full_chain_algorithm(
     vecmem::memory_resource& host_mr,
@@ -60,20 +65,23 @@ full_chain_algorithm::full_chain_algorithm(
           m_device_mr),
       m_detector(detector),
       m_clusterization({m_cached_device_mr, &m_cached_pinned_host_mr}, m_copy,
-                       m_stream, clustering_config),
+                       m_stream, clustering_config,
+                       logger->cloneWithSuffix("ClusterizationAlg"),
+                       await_function),
       m_measurement_sorting({m_cached_device_mr, &m_cached_pinned_host_mr},
                             m_copy, m_stream,
                             logger->cloneWithSuffix("MeasSortingAlg")),
-      m_spacepoint_formation({m_cached_device_mr, &m_cached_pinned_host_mr},
-                             m_copy, m_stream,
-                             logger->cloneWithSuffix("SpFormationAlg")),
+      m_spacepoint_formation(
+          {m_cached_device_mr, &m_cached_pinned_host_mr}, m_copy, m_stream,
+          logger->cloneWithSuffix("SpFormationAlg"), await_function),
       m_seeding(finder_config, grid_config, filter_config,
                 {m_cached_device_mr, &m_cached_pinned_host_mr}, m_copy,
-                m_stream, logger->cloneWithSuffix("SeedingAlg")),
+                m_stream, logger->cloneWithSuffix("SeedingAlg"),
+                await_function),
       m_track_parameter_estimation(
           track_params_estimation_config,
           {m_cached_device_mr, &m_cached_pinned_host_mr}, m_copy, m_stream,
-          logger->cloneWithSuffix("TrackParEstAlg")),
+          logger->cloneWithSuffix("TrackParEstAlg"), await_function),
       m_finding(finding_config, {m_cached_device_mr, &m_cached_pinned_host_mr},
                 m_copy, m_stream, logger->cloneWithSuffix("TrackFindingAlg")),
       m_fitting(fitting_config, {m_cached_device_mr, &m_cached_pinned_host_mr},
@@ -121,21 +129,23 @@ full_chain_algorithm::full_chain_algorithm(const full_chain_algorithm& parent)
           m_device_mr),
       m_detector(parent.m_detector),
       m_clusterization({m_cached_device_mr, &m_cached_pinned_host_mr}, m_copy,
-                       m_stream, parent.m_clustering_config),
+                       m_stream, parent.m_clustering_config,
+                       parent.logger().cloneWithSuffix("ClusterizationAlg"),
+                       await_function),
       m_measurement_sorting({m_cached_device_mr, &m_cached_pinned_host_mr},
                             m_copy, m_stream,
                             parent.logger().cloneWithSuffix("MeasSortingAlg")),
-      m_spacepoint_formation({m_cached_device_mr, &m_cached_pinned_host_mr},
-                             m_copy, m_stream,
-                             parent.logger().cloneWithSuffix("SpFormationAlg")),
-      m_seeding(parent.m_finder_config, parent.m_grid_config,
-                parent.m_filter_config,
-                {m_cached_device_mr, &m_cached_pinned_host_mr}, m_copy,
-                m_stream, parent.logger().cloneWithSuffix("SeedingAlg")),
+      m_spacepoint_formation(
+          {m_cached_device_mr, &m_cached_pinned_host_mr}, m_copy, m_stream,
+          parent.logger().cloneWithSuffix("SpFormationAlg"), await_function),
+      m_seeding(
+          parent.m_finder_config, parent.m_grid_config, parent.m_filter_config,
+          {m_cached_device_mr, &m_cached_pinned_host_mr}, m_copy, m_stream,
+          parent.logger().cloneWithSuffix("SeedingAlg"), await_function),
       m_track_parameter_estimation(
           parent.m_track_params_estimation_config,
           {m_cached_device_mr, &m_cached_pinned_host_mr}, m_copy, m_stream,
-          parent.logger().cloneWithSuffix("TrackParamEstAlg")),
+          parent.logger().cloneWithSuffix("TrackParamEstAlg"), await_function),
       m_finding(parent.m_finding_config,
                 {m_cached_device_mr, &m_cached_pinned_host_mr}, m_copy,
                 m_stream, parent.logger().cloneWithSuffix("TrackFindingAlg")),
