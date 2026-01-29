@@ -7,6 +7,9 @@
 
 #pragma once
 
+// Local include(s).
+#include "../common/await_strategy.hpp"
+
 // Project include(s).
 #include "traccc/bfield/magnetic_field.hpp"
 #include "traccc/clusterization/clusterization_algorithm.hpp"
@@ -79,7 +82,8 @@ class full_chain_algorithm
         const fitting_algorithm::config_type& fitting_config,
         const silicon_detector_description::host& det_descr,
         const magnetic_field& field, const host_detector* detector,
-        std::unique_ptr<const traccc::Logger> logger);
+        std::unique_ptr<const traccc::Logger> logger,
+        await_strategy = await_strategy::sync);
 
     /// Reconstruct track parameters in the entire detector
     ///

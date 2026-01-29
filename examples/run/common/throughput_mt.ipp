@@ -12,6 +12,7 @@
 #ifdef TRACCC_THROUGHPUT_MT_BOOST_FIBER
 #include "fiber_pool.hpp"
 #endif
+#include "await_strategy.hpp"
 #include "make_magnetic_field.hpp"
 
 // Project include(s)
@@ -181,14 +182,27 @@ int throughput_mt(std::string_view description, int argc, char* argv[]) {
         concurrent_slots.push(i);
     }
 
+    // Determine the await strategy to use.
+    await_strategy await_mode = await_strategy::sync;
+#ifdef TRACCC_THROUGHPUT_MT_BOOST_FIBER
+    if (threading_opts.await_mode == opts::threading::await_strategy::suspend) {
+        await_mode = await_strategy::boost_fiber_await;
+    }
+#else
+    if (threading_opts.await_mode == opts::threading::await_strategy::suspend) {
+        await_mode = await_strategy::tbb_await;
+    }
+#endif
+
     // Set up the full-chain algorithm(s). One for each concurrent slot
     std::vector<FULL_CHAIN_ALG> algs;
     algs.reserve(threading_opts.concurrent_slots + 1);
     for (std::size_t i = 0; i < threading_opts.concurrent_slots + 1; ++i) {
-        algs.push_back(
-            {host_mr, clustering_cfg, seedfinder_config, spacepoint_grid_config,
-             seedfilter_config, track_params_estimation_config, finding_cfg,
-             fitting_cfg, det_descr, field, &detector, logger().clone()});
+        algs.push_back({host_mr, clustering_cfg, seedfinder_config,
+                        spacepoint_grid_config, seedfilter_config,
+                        track_params_estimation_config, finding_cfg,
+                        fitting_cfg, det_descr, field, &detector,
+                        logger().clone(), await_mode});
     }
 
     // Set up a lambda that calls the correct function on the algorithms.
@@ -269,7 +283,8 @@ int throughput_mt(std::string_view description, int argc, char* argv[]) {
 
 #ifdef TRACCC_THROUGHPUT_MT_BOOST_FIBER
             fibers.enqueue([&, event, slot]() {
-                rec_track_params.fetch_add(process_event(static_cast<int>(slot), input[event]));
+                rec_track_params.fetch_add(
+                    process_event(static_cast<int>(slot), input[event]));
                 progress_bar.tick();
                 concurrent_slots.push(slot);
                 latch.count_down();

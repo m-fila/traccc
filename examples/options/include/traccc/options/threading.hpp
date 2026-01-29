@@ -22,6 +22,13 @@ class threading : public interface {
     /// @name Options
     /// @{
 
+    enum class await_strategy {
+        sync,    ///< Synchronous waiting
+        suspend  ///< Suspending waiting
+    };
+
+    await_strategy await_mode = await_strategy::sync;
+
     /// The number of threads to use for the data processing
     std::size_t threads = 1;
 

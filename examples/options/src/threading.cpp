@@ -20,6 +20,11 @@ using concurrent_slots_type = std::size_t;
 /// Name of the concurrent slots option
 static const char* concurrent_slots_option = "concurrent-slots";
 
+/// Type alias for the await strategy enumeration
+using await_strategy_type = std::string;
+/// Name of the await strategy option
+static const char* await_strategy_option = "await-strategy";
+
 threading::threading() : interface("Multi-Threading Options") {
 
     m_desc.add_options()(
@@ -29,7 +34,10 @@ threading::threading() : interface("Multi-Threading Options") {
         concurrent_slots_option,
         boost::program_options::value<concurrent_slots_type>(),
         "The number of events that can be "
-        "processed concurrently, be default equal to cpu-threads");
+        "processed concurrently, be default equal to cpu-threads")(
+        await_strategy_option,
+        boost::program_options::value<std::string>()->default_value("sync"),
+        "The await strategy to use (\"sync\" or \"suspend\")");
 }
 
 void threading::read(const boost::program_options::variables_map& vm) {
@@ -46,11 +54,38 @@ void threading::read(const boost::program_options::variables_map& vm) {
             throw std::invalid_argument{"Must use concurrent-slots>0"};
         }
     }
+    if (vm.count(await_strategy_option)) {
+        const std::string await_string =
+            vm[await_strategy_option].as<await_strategy_type>();
+        if (await_string == "sync") {
+            await_mode = await_strategy::sync;
+        } else if (await_string == "suspend") {
+            await_mode = await_strategy::suspend;
+        } else {
+            throw std::invalid_argument{"Unknown await strategy: " +
+                                        await_string};
+        }
+    }
 }
 
 std::unique_ptr<configuration_printable> threading::as_printable() const {
     auto cat = std::make_unique<configuration_category>(m_description);
 
+    std::string await_string;
+    switch (await_mode) {
+        case await_strategy::sync:
+            await_string = "synchronous";
+            break;
+        case await_strategy::suspend:
+            await_string = "suspending";
+            break;
+        default:
+            await_string = "unknown";
+            break;
+    }
+
+    cat->add_child(std::make_unique<configuration_kv_pair>("Await strategy",
+                                                           await_string));
     cat->add_child(std::make_unique<configuration_kv_pair>(
         "Number of CPU thread", std::to_string(threads)));
     cat->add_child(std::make_unique<configuration_kv_pair>(
