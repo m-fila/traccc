@@ -8,6 +8,7 @@
 // Local include(s).
 #include "full_chain_algorithm.hpp"
 
+#include "boost_fiber_await.hpp"
 #include "tbb_await.hpp"
 
 // Project include(s).
