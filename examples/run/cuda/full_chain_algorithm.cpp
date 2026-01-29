@@ -34,7 +34,7 @@
 
 namespace traccc::cuda {
 
-constexpr auto await_function = tbb_await;
+constexpr auto await_function = default_await_function;
 
 full_chain_algorithm::full_chain_algorithm(
     vecmem::memory_resource& host_mr,
