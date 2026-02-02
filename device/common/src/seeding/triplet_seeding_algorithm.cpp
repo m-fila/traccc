@@ -67,7 +67,7 @@ auto triplet_seeding_algorithm::operator()(
         // Here we could give control back to the caller, once our code allows
         // for it. (coroutines...)<-WIP
         await();
-        n_spacepoints = size.get();
+        n_spacepoints = size.unsafe_get();
     } else {
         n_spacepoints = copy().get_size(spacepoints);
     }
@@ -120,7 +120,7 @@ auto triplet_seeding_algorithm::operator()(
         // Here we could give control back to the caller, once our code allows
         // for it. (coroutines...)<-WIP
         await();
-        n_spacepoints = size.get();
+        n_spacepoints = size.unsafe_get();
     } else {
         n_spacepoints = copy().get_size(grid_prefix_sum_buffer);
     }
@@ -155,7 +155,7 @@ auto triplet_seeding_algorithm::operator()(
         // Here we could give control back to the caller, once our code allows
         // for it. (coroutines...)<-WIP
         await();
-        n_doublets = size.get();
+        n_doublets = size.unsafe_get();
     } else {
         n_doublets = copy().get_size(doublet_counter_buffer);
     }
@@ -217,7 +217,7 @@ auto triplet_seeding_algorithm::operator()(
         // Here we could give control back to the caller, once our code allows
         // for it. (coroutines...)<-WIP
         await();
-        n_midBotTriplets = size.get();
+        n_midBotTriplets = size.unsafe_get();
     } else {
         n_midBotTriplets = copy().get_size(triplet_counter_midBot_buffer);
     }

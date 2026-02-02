@@ -83,7 +83,7 @@ clusterization_algorithm::execute_impl(
         // Here we could give control back to the caller, once our code allows
         // for it. (coroutines...)<-WIP
         await();
-        num_cells = size.get();
+        num_cells = size.unsafe_get();
     } else {
         num_cells = copy().get_size(cells);
     }
@@ -141,7 +141,7 @@ clusterization_algorithm::execute_impl(
             // Here we could give control back to the caller, once our code
             // allows for it. (coroutines...)<-WIP
             await();
-            num_measurements = size.get();
+            num_measurements = size.unsafe_get();
         } else {
             num_measurements = copy().get_size(measurements);
         }

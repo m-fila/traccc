@@ -29,7 +29,7 @@ auto silicon_pixel_spacepoint_formation_algorithm::operator()(
         // Here we could give control back to the caller, once our code allows
         // for it. (coroutines...)<-WIP
         await();
-        n_measurements = size.get();
+        n_measurements = size.unsafe_get();
     } else {
         n_measurements = copy().get_size(measurements);
     }

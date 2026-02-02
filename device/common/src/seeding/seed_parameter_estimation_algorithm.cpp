@@ -42,7 +42,7 @@ auto seed_parameter_estimation_algorithm::operator()(
         // Here we could give control back to the caller, once our code allows
         // for it. (coroutines...)<-WIP
         await();
-        n_seeds = size.get();
+        n_seeds = size.unsafe_get();
     } else {
         n_seeds = copy().get_size(seeds);
     }
