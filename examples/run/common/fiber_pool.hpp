@@ -1,13 +1,13 @@
 #pragma once
 
 // Boost.Fiber include(s).
+#include <boost/fiber/algo/shared_work.hpp>
 #include <boost/fiber/condition_variable.hpp>
 #include <boost/fiber/fiber.hpp>
 #include <boost/fiber/mutex.hpp>
 
 // System include(s).
 #include <thread>
-#include <unordered_map>
 #include <vector>
 
 namespace traccc {
@@ -29,18 +29,19 @@ class fiber_pool {
     void enqueue(T&& func) {
         boost::fibers::fiber(boost::fibers::launch::post, std::forward<T>(func))
             .detach();
+        for (auto& scheduler : m_fiber_schedulers) {
+            scheduler->notify();
+        }
     }
 
-    /// Get the index in the pool of the thread associated to the given id
-    int get_thread_index(std::thread::id id) const;
-
     private:
+    using fiber_algorithm_type = boost::fibers::algo::shared_work;
     std::vector<std::jthread> m_threads;  /// Worker threads
+    std::vector<fiber_algorithm_type*>
+        m_fiber_schedulers;        // handles to fiber scheduling algorithms
     boost::fibers::mutex m_mutex;  /// Mutex for synchronizing destruction of
                                    /// workers' main fibers
     boost::fibers::condition_variable
         m_cv;  /// Condition variable for destruction of workers' main fibers
-    std::unordered_map<std::thread::id, int>
-        m_thread_indices;  /// Map of thread ids to indices in worker pool
 };
 }  // namespace traccc
